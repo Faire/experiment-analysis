@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name='experiment-analysis',
+setup(name='experiment_analysis',
       version='0.1',
-      packages=['experiment-analysis'],
+      packages=['experiment_analysis'],
 )
