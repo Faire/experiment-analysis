@@ -52,7 +52,7 @@ def get_timeseries(df, metric, event_ts, control_name='control', treatment_name=
         'metric': metric,
         'confidence_level': confidence_level
     }
-
+    df.columns = df.columns.str.lower()
     df["bucketed_at"] = pd.to_datetime(df["bucketed_at"])
     df[event_ts] = pd.to_datetime(df[event_ts])
     df["exp_start_date"] = pd.to_datetime(df["exp_start_date"])
