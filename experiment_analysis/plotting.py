@@ -62,21 +62,20 @@ def get_timeseries(
                          .groupby(["identifier", "bucket_name"])
                          .agg('sum')
                          .reset_index())
-
         # Calculate CUPED and capped metrics depending on method provided
         merge_cols = ["identifier", "bucket_name"]
-        if method == TimeseriesMethod.CUPED:
+        if method.name == TimeseriesMethod.CUPED.name:
             params.update({"metric": f"{metric}_cuped"})
             df_agg_joined = df_agg_metric.merge(
                 df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
             df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
             df_agg_joined[f"{metric}_cuped"] = apply_cuped(
                 df_agg_joined, metric, f"{covariate_prefix}_{metric}")
-        elif method == TimeseriesMethod.CAPPED:
+        elif method.name == TimeseriesMethod.CAPPED.name:
             params.update({"metric": f"{metric}_capped"})
             df_agg_metric[f"{metric}_capped"] = apply_capping(
                 df_agg_metric, metric)
-        elif method == TimeseriesMethod.CUPED_CAPPED:
+        elif method.name == TimeseriesMethod.CUPED_CAPPED.name:
             params.update({"metric": f"{metric}_cuped_capped"})
             df_agg_joined = df_agg_metric.merge(
                 df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
@@ -87,9 +86,11 @@ def get_timeseries(
                                                                     metric=f"{metric}_cuped",
                                                                     method=CappingMethod.WITH_CUPED,
                                                                     metric_raw=metric)
-
+        else:
+          raise "Method not recognized"
+        
         # Calculate ttest results for desired metric
-        if method == TimeseriesMethod.CUPED or method == TimeseriesMethod.CUPED_CAPPED:
+        if method.name == TimeseriesMethod.CUPED.name or method.name == TimeseriesMethod.CUPED_CAPPED.name:
             row = summarize_ttest(df_agg_joined, **params)
             row["ds"] = _date - np.timedelta64(1, 'D')
             row["bucket_count"] = df_agg_joined.shape[0]
