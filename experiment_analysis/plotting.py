@@ -1,5 +1,7 @@
-import pandas as pd
+from enum import Enum
+
 import numpy as np
+import pandas as pd
 import scipy.stats as stats
 from experiment_analysis.ttest import summarize_ttest
 from plotly.offline import download_plotlyjs, init_notebook_mode, iplot
