@@ -6,12 +6,29 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, iplot
 import plotly.graph_objs as go
 
 
-def get_timeseries(df, metric, event_ts, control_name='control', treatment_name='treatment', confidence_level=0.9):
+class TimeseriesMethod(Enum):
+    STANDARD = "STANDARD"
+    CUPED = "CUPED"
+    CAPPED = "CAPPED"
+    CUPED_CAPPED = "CUPED_CAPPED"
+
+
+def get_timeseries(
+    df,
+    metric,
+    event_ts,
+    method=TimeseriesMethod.STANDARD,
+    control_name="control",
+    treatment_name="treatment",
+    confidence_level=0.9,
+    covariate_prefix="pre_exp",
+    df_pre_exp=None
+):
     params = {
-        'control_name': control_name,
-        'treatment_name': treatment_name,
-        'metric': metric,
-        'confidence_level': confidence_level
+        "control_name": control_name,
+        "treatment_name": treatment_name,
+        "metric": metric,
+        "confidence_level": confidence_level
     }
     df.columns = df.columns.str.lower()
     df["bucketed_at"] = pd.to_datetime(df["bucketed_at"])
@@ -20,7 +37,7 @@ def get_timeseries(df, metric, event_ts, control_name='control', treatment_name=
 
     run_dates = []
     # First day of computation is first full day of assignments
-    start_date = df['exp_start_date'].unique()[0]  # + np.timedelta64(1, 'D')
+    start_date = df["exp_start_date"].unique()[0]
 
     while start_date <= np.max(df["bucketed_at"]):
         start_date += np.timedelta64(1, 'D')
@@ -28,12 +45,55 @@ def get_timeseries(df, metric, event_ts, control_name='control', treatment_name=
 
     rows = []
     for _date in run_dates:
+        # Keep subjects where bucketing event is bfore current date
+        # Set events to zero where date of event (e.g., brand order created) is after current date
+        # Set events to zero where event happened before bucketing as a safeguard. Should be done in main query.
         idx = df["bucketed_at"] <= _date
         df_date = df.loc[idx].reset_index(drop=True)
         df_date[metric].loc[df_date[event_ts] > _date] = 0
-        df_date[metric].loc[df_date[event_ts] < df_date['exp_start_date']] = 0
-        row = summarize_ttest(df_date, **params)
-        row["ds"] = _date - np.timedelta64(1, 'D')
+        df_date[metric].loc[df_date[event_ts] < df_date["bucketed_at"]] = 0
+
+        # Must aggregate df to level of unit of randomization for correct t-test
+        df_agg_metric = (df_date[["identifier", "bucket_name", metric]]
+                         .groupby(["identifier", "bucket_name"])
+                         .agg('sum')
+                         .reset_index())
+
+        # Calculate CUPED and capped metrics depending on method provided
+        merge_cols = ["identifier", "bucket_name"]
+        if method == TimeseriesMethod.CUPED:
+            params.update({"metric": f"{metric}_cuped"})
+            df_agg_joined = df_agg_metric.merge(
+                df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
+            df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
+            df_agg_joined[f"{metric}_cuped"] = apply_cuped(
+                df_agg_joined, metric, f"{covariate_prefix}_{metric}")
+        elif method == TimeseriesMethod.CAPPED:
+            params.update({"metric": f"{metric}_capped"})
+            df_agg_metric[f"{metric}_capped"] = apply_capping(
+                df_agg_metric, metric)
+        elif method == TimeseriesMethod.CUPED_CAPPED:
+            params.update({"metric": f"{metric}_cuped_capped"})
+            df_agg_joined = df_agg_metric.merge(
+                df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
+            df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
+            df_agg_joined[f"{metric}_cuped"] = apply_cuped(
+                df_agg_joined, metric, f"{covariate_prefix}_{metric}")
+            df_agg_joined[f"{metric}_cuped_capped"] = apply_capping(df=df_agg_joined,
+                                                                    metric=f"{metric}_cuped",
+                                                                    method=CappingMethod.WITH_CUPED,
+                                                                    metric_raw=metric)
+
+        # Calculate ttest results for desired metric
+        if method == TimeseriesMethod.CUPED or method == TimeseriesMethod.CUPED_CAPPED:
+            row = summarize_ttest(df_agg_joined, **params)
+            row["ds"] = _date - np.timedelta64(1, 'D')
+            row["bucket_count"] = df_agg_joined.shape[0]
+        else:
+            row = summarize_ttest(df_agg_metric, **params)
+            row["ds"] = _date - np.timedelta64(1, 'D')
+            row["bucket_count"] = df_agg_metric.shape[0]
+
         rows.append(row)
     return pd.DataFrame(rows)
 
