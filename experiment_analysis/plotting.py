@@ -53,6 +53,7 @@ def get_timeseries(
         df_date[metric].loc[df_date[event_ts] > _date] = 0
         df_date[metric].loc[df_date[event_ts] < df_date["bucketed_at"]] = 0
 
+        # Must aggregate df to level of unit of randomization for correct t-test
         df_agg_metric = (df_date[["identifier", "bucket_name", metric]]
                          .groupby(["identifier", "bucket_name"])
                          .agg('sum')
