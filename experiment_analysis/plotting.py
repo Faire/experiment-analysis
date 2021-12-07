@@ -3,7 +3,9 @@ from enum import Enum
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-from experiment_analysis.ttest import summarize_ttest, apply_cuped, apply_capping
+from experiment_analysis.ttest import summarize_ttest
+from exepriment_analysis.cuped import apply_cuped
+from experiment_analysis.capping import apply_capping
 from plotly.offline import download_plotlyjs, init_notebook_mode, iplot
 import plotly.graph_objs as go
 
