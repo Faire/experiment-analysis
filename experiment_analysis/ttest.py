@@ -30,14 +30,14 @@ def summarize_ttest(df, control_name, treatment_name, metric, confidence_level=0
     ci_lift_lower = pct_lift - t_crit * se_lift
     ci_lift_upper = pct_lift + t_crit * se_lift
 
-    results = {'delta': "{0:.3}".format(delta),
-               'control_mean': "{0:.4}".format(control_mean),
-               'treatment_mean': "{0:.4}".format(treatment_mean),
-               'pct_lift': "{0:.3%}".format(pct_lift),
-               'ci_delta_lower': "{0:.3}".format(ci[0]),
-               'ci_delta_upper': "{0:.3}".format(ci[1]),
-               'ci_lift_lower': "{0:.3%}".format(ci_lift_lower),
-               'ci_lift_upper': "{0:.3%}".format(ci_lift_upper),
-               'p_val': "{0:.3}".format(cm_stats[1])}
+    results = {'delta': delta,
+               'control_mean': control_mean,
+               'treatment_mean': treatment_mean,
+               'pct_lift': pct_lift,
+               'ci_delta_lower': ci[0],
+               'ci_delta_upper': ci[1],
+               'ci_lift_lower': ci_lift_lower,
+               'ci_lift_upper': ci_lift_upper,
+               'p_val': cm_stats[1]}
 
     return (results)

@@ -144,4 +144,9 @@ def plot_timeseries(df, datecol="ds", metric="pct_lift",
             "height": 600
         }
     fig.update_layout(**layout)
+
+    fig.update_layout(
+        yaxis={'tickformat': ',.3%'}
+    )
+
     fig.show()
