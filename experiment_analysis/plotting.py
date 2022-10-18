@@ -26,7 +26,8 @@ def get_timeseries(
     treatment_name="treatment",
     confidence_level=0.9,
     covariate_prefix="pre_exp",
-    df_pre_exp=None
+    df_pre_exp=None,
+    analyze_dates=np.timedelta64(1, 'D')
 ):
     params = {
         "control_name": control_name,
@@ -43,9 +44,16 @@ def get_timeseries(
     # First day of computation is first full day of assignments
     start_date = df["exp_start_date"].unique()[0]
 
-    while start_date <= np.max(df["bucketed_at"]):
-        start_date += np.timedelta64(1, 'D')
-        run_dates.append(start_date)
+    if type(analyze_dates) == np.timedelta64:
+        while start_date <= np.max(df["bucketed_at"]):
+            start_date += analyze_dates
+            run_dates.append(start_date)
+    elif type(analyze_dates) == list:
+        run_dates = analyze_dates
+    else:
+        while start_date <= np.max(df["bucketed_at"]):
+            start_date += np.timedelta64(1, 'D')
+            run_dates.append(start_date)
 
     rows = []
     for _date in run_dates:
