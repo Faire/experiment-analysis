@@ -55,7 +55,7 @@ def apply_isora(
 
     # train isotonic regression
     iso_reg = (
-        IsotonicRegression(y_min = 0)
+        IsotonicRegression(increasing='auto')
         .fit(df[metric_cv], df[metric])
     )
 
