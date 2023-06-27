@@ -12,6 +12,7 @@ from experiment_analysis.exceptions import (
 
 class IsoraMethod(Enum):
     STANDARD = "STANDARD"
+    DEMEAN = "DEMEAN"
 
 
 def apply_isora(
@@ -52,15 +53,18 @@ def apply_isora(
             f"input isotonic regression method is invalid. Must be one of {IsoraMethod!r}"
         )
 
-    if user_method == IsoraMethod.STANDARD:
-        # train isotonic regression
-        iso_reg = (
-            IsotonicRegression(y_min = 0)
-            .fit(df[metric_cv], df[metric])
-        )
+    # train isotonic regression
+    iso_reg = (
+        IsotonicRegression(y_min = 0)
+        .fit(df[metric_cv], df[metric])
+    )
 
-        # calculate isotonic-regressed metric
-        resid = df[metric] - iso_reg.predict(df[metric_cv]) # get resid
+    # calculate isotonic-regressed metric
+    resid = df[metric] - iso_reg.predict(df[metric_cv]) # get resid
+
+    if user_method == IsoraMethod.STANDARD:
         iso_metric = resid + np.mean(df[metric]) # get isotonic-regressed metric
+    elif user_method == IsoraMethod.DEMEAN:
+        iso_metric = resid
 
     return iso_metric
