@@ -65,6 +65,6 @@ def apply_isora(
     if user_method == IsoraMethod.STANDARD:
         iso_metric = resid + np.mean(df[metric]) # get isotonic-regressed metric
     elif user_method == IsoraMethod.DEMEAN:
-        iso_metric = resid
+        iso_metric = resid # get demeaned isotonic metric
 
     return iso_metric
