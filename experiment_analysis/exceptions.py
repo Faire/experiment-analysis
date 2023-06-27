@@ -6,5 +6,5 @@ class InvalidParameter(Exception):
     pass
 
 
-class InvalidIsoraMethod(Exception):
+class InvalidIsotonicMethod(Exception):
     pass

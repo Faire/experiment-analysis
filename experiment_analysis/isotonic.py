@@ -6,20 +6,20 @@ import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 
 from experiment_analysis.exceptions import (
-    InvalidInputDataframe, InvalidIsoraMethod
+    InvalidInputDataframe, InvalidIsotonicMethod
 )
 
 
-class IsoraMethod(Enum):
+class IsotonicMethod(Enum):
     STANDARD = "STANDARD"
     DEMEAN = "DEMEAN"
 
 
-def apply_isora(
+def apply_isotonic(
     df: pd.DataFrame,
     metric: str,
     metric_cv: str,
-    method: Union[str, IsoraMethod] = IsoraMethod.STANDARD,
+    method: Union[str, IsotonicMethod] = IsotonicMethod.STANDARD,
 ) -> pd.Series:
     """Apply Isotonic Regression to compute isotnoic metric based on experiment metric and pre-experiment covariate
 
@@ -31,12 +31,12 @@ def apply_isora(
     :return: Metric with Isotonic Regression applied to it
     :rtype: pd.Series
     """
-    user_method: IsoraMethod
+    user_method: IsotonicMethod
 
     if isinstance(method, str):
-        user_method = IsoraMethod(method.upper())
+        user_method = IsotonicMethod(method.upper())
     else:
-        user_method = IsoraMethod(method)
+        user_method = IsotonicMethod(method)
 
     if metric not in df.columns:
         raise InvalidInputDataframe(
@@ -48,9 +48,9 @@ def apply_isora(
             f"input dataframe is missing cv metric column {metric_cv!r}"
         )
 
-    if user_method not in IsoraMethod:
-        raise InvalidIsoraMethod(
-            f"input isotonic regression method is invalid. Must be one of {IsoraMethod!r}"
+    if user_method not in IsotonicMethod:
+        raise InvalidIsotonicMethod(
+            f"input isotonic regression method is invalid. Must be one of {IsotonicMethod!r}"
         )
 
     # train isotonic regression
@@ -62,9 +62,9 @@ def apply_isora(
     # calculate isotonic-regressed metric
     resid = df[metric] - iso_reg.predict(df[metric_cv]) # get resid
 
-    if user_method == IsoraMethod.STANDARD:
+    if user_method == IsotonicMethod.STANDARD:
         iso_metric = resid + np.mean(df[metric]) # get isotonic-regressed metric
-    elif user_method == IsoraMethod.DEMEAN:
+    elif user_method == IsotonicMethod.DEMEAN:
         iso_metric = resid # get demeaned isotonic metric
 
     return iso_metric
