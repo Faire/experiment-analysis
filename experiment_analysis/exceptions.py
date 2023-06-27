@@ -4,3 +4,7 @@ class InvalidInputDataframe(Exception):
 
 class InvalidParameter(Exception):
     pass
+
+
+class InvalidIsoraMethod(Exception):
+    pass
