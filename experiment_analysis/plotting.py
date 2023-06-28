@@ -118,14 +118,14 @@ def get_timeseries(
                                                                     metric_raw=metric)
 
         # Calculate ttest results for desired metric
-        if method == TimeseriesMethod.CUPED or method == TimeseriesMethod.CUPED_CAPPED:
-            row = summarize_ttest(df_agg_joined, **params)
-            row["ds"] = _date - np.timedelta64(1, 'D')
-            row["bucket_count"] = df_agg_joined.shape[0]
-        else:
+        if method == TimeseriesMethod.CAPPED:
             row = summarize_ttest(df_agg_metric, **params)
             row["ds"] = _date - np.timedelta64(1, 'D')
             row["bucket_count"] = df_agg_metric.shape[0]
+        else:
+            row = summarize_ttest(df_agg_joined, **params)
+            row["ds"] = _date - np.timedelta64(1, 'D')
+            row["bucket_count"] = df_agg_joined.shape[0]
 
         rows.append(row)
     return pd.DataFrame(rows)
