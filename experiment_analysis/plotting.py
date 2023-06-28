@@ -6,6 +6,7 @@ import scipy.stats as stats
 from experiment_analysis.ttest import summarize_ttest
 from experiment_analysis.cuped import apply_cuped
 from experiment_analysis.capping import apply_capping, CappingMethod
+from experiment_analysis.isotonic import apply_isotonic
 from plotly.offline import download_plotlyjs, init_notebook_mode, iplot
 import plotly.graph_objs as go
 
@@ -15,6 +16,8 @@ class TimeseriesMethod(Enum):
     CUPED = "CUPED"
     CAPPED = "CAPPED"
     CUPED_CAPPED = "CUPED_CAPPED"
+    ISOTONIC = "ISOTONIC"
+    ISOTONIC_CAPPED = "ISOTONIC_CAPPED"
 
 
 def get_timeseries(
@@ -94,6 +97,24 @@ def get_timeseries(
             df_agg_joined[f"{metric}_cuped_capped"] = apply_capping(df=df_agg_joined,
                                                                     metric=f"{metric}_cuped",
                                                                     method=CappingMethod.WITH_CUPED,
+                                                                    metric_raw=metric)
+        elif method == TimeseriesMethod.ISOTONIC:
+            params.update({"metric": f"{metric}_isotonic"})
+            df_agg_joined = df_agg_metric.merge(
+                df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
+            df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
+            df_agg_joined[f"{metric}_isotonic"] = apply_isotonic(
+                df_agg_joined, metric, f"{covariate_prefix}_{metric}")
+        elif method == TimeseriesMethod.ISOTONIC_CAPPED:
+            params.update({"metric": f"{metric}_isotonic_capped"})
+            df_agg_joined = df_agg_metric.merge(
+                df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
+            df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
+            df_agg_joined[f"{metric}_isotonic"] = apply_isotonic(
+                df_agg_joined, metric, f"{covariate_prefix}_{metric}")
+            df_agg_joined[f"{metric}_isotonic_capped"] = apply_capping(df=df_agg_joined,
+                                                                    metric=f"{metric}_isotoic",
+                                                                    method=CappingMethod.WITH_ISOTONIC,
                                                                     metric_raw=metric)
 
         # Calculate ttest results for desired metric

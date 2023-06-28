@@ -13,7 +13,7 @@ from experiment_analysis.exceptions import (
 class CappingMethod(Enum):
     STANDARD = "STANDARD"
     WITH_CUPED = "WITH_CUPED"
-    WITH_ISORA = "WITH_ISORA"
+    WITH_ISOTONIC = "WITH_ISOTONIC"
 
 
 def apply_capping(
@@ -51,7 +51,7 @@ def apply_capping(
     if user_method == CappingMethod.STANDARD:
         metric_mean = df.loc[df[metric] > 0][metric].mean()
         metric_stdev = df.loc[df[metric] > 0][metric].std()
-    elif user_method == CappingMethod.WITH_CUPED or user_method == CappingMethod.WITH_ISORA:
+    elif user_method == CappingMethod.WITH_CUPED or user_method == CappingMethod.WITH_ISOTONIC:
 
         if metric_raw not in df.columns:
             raise InvalidInputDataframe(
