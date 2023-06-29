@@ -76,49 +76,40 @@ def get_timeseries(
 
         # Calculate CUPED and capped metrics depending on method provided
         merge_cols = ["identifier", "bucket_name"]
-        if method == TimeseriesMethod.CUPED:
-            params.update({"metric": f"{metric}_cuped"})
-            df_agg_joined = df_agg_metric.merge(
-                df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
-            df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
-            df_agg_joined[f"{metric}_cuped"] = apply_cuped(
-                df_agg_joined, metric, f"{covariate_prefix}_{metric}")
-        elif method == TimeseriesMethod.CAPPED:
+
+        if method == TimeseriesMethod.CAPPED:
             params.update({"metric": f"{metric}_capped"})
             df_agg_metric[f"{metric}_capped"] = apply_capping(
                 df_agg_metric, metric)
-        elif method == TimeseriesMethod.CUPED_CAPPED:
-            params.update({"metric": f"{metric}_cuped_capped"})
+        else:
+            params.update({"metric": f"{metric}_{method.value.lower()}"})
             df_agg_joined = df_agg_metric.merge(
                 df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
             df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
-            df_agg_joined[f"{metric}_cuped"] = apply_cuped(
-                df_agg_joined, metric, f"{covariate_prefix}_{metric}")
-            df_agg_joined[f"{metric}_cuped_capped"] = apply_capping(df=df_agg_joined,
-                                                                    metric=f"{metric}_cuped",
-                                                                    method=CappingMethod.WITH_CUPED,
-                                                                    metric_raw=metric)
-        elif method == TimeseriesMethod.ISOTONIC:
-            params.update({"metric": f"{metric}_isotonic"})
-            df_agg_joined = df_agg_metric.merge(
-                df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
-            df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
-            df_agg_joined[f"{metric}_isotonic"] = apply_isotonic(
-                df_agg_joined, metric, f"{covariate_prefix}_{metric}")
-        elif method == TimeseriesMethod.ISOTONIC_CAPPED:
-            params.update({"metric": f"{metric}_isotonic_capped"})
-            df_agg_joined = df_agg_metric.merge(
-                df_pre_exp[[*merge_cols, f"{covariate_prefix}_{metric}"]], on=merge_cols, how="left")
-            df_agg_joined[f"pre_exp_{metric}"].fillna(0, inplace=True)
-            df_agg_joined[f"{metric}_isotonic"] = apply_isotonic(
-                df_agg_joined, metric, f"{covariate_prefix}_{metric}")
-            df_agg_joined[f"{metric}_isotonic_capped"] = apply_capping(df=df_agg_joined,
-                                                                    metric=f"{metric}_isotoic",
-                                                                    method=CappingMethod.WITH_ISOTONIC,
-                                                                    metric_raw=metric)
+
+            if method == TimeseriesMethod.CUPED:
+                df_agg_joined[f"{metric}_cuped"] = apply_cuped(
+                    df_agg_joined, metric, f"{covariate_prefix}_{metric}")
+            elif method == TimeseriesMethod.ISOTONIC:
+                df_agg_joined[f"{metric}_isotonic"] = apply_isotonic(
+                    df_agg_joined, metric, f"{covariate_prefix}_{metric}")
+            elif method == TimeseriesMethod.CUPED_CAPPED:
+                df_agg_joined[f"{metric}_cuped"] = apply_cuped(
+                    df_agg_joined, metric, f"{covariate_prefix}_{metric}")
+                df_agg_joined[f"{metric}_cuped_capped"] = apply_capping(df=df_agg_joined,
+                                                                        metric=f"{metric}_cuped",
+                                                                        method=CappingMethod.WITH_CUPED,
+                                                                        metric_raw=metric)
+            elif method == TimeseriesMethod.ISOTONIC_CAPPED:
+                df_agg_joined[f"{metric}_isotonic"] = apply_isotonic(
+                    df_agg_joined, metric, f"{covariate_prefix}_{metric}")
+                df_agg_joined[f"{metric}_isotonic_capped"] = apply_capping(df=df_agg_joined,
+                                                                        metric=f"{metric}_isotoic",
+                                                                        method=CappingMethod.WITH_ISOTONIC,
+                                                                        metric_raw=metric)
 
         # Calculate ttest results for desired metric
-        if method == TimeseriesMethod.CAPPED:
+        if method == TimeseriesMethod.STANDARD or method == TimeseriesMethod.CAPPED:
             row = summarize_ttest(df_agg_metric, **params)
             row["ds"] = _date - np.timedelta64(1, 'D')
             row["bucket_count"] = df_agg_metric.shape[0]
