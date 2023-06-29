@@ -4,7 +4,3 @@ class InvalidInputDataframe(Exception):
 
 class InvalidParameter(Exception):
     pass
-
-
-class InvalidIsotonicMethod(Exception):
-    pass
