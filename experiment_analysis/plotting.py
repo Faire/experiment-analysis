@@ -96,15 +96,15 @@ def get_timeseries(
             elif method == TimeseriesMethod.CUPED_CAPPED:
                 df_agg_metric = df_agg_metric.assign(**{
                         f"{metric}_cuped": apply_cuped(df_agg_metric, metric, f"{covariate_prefix}_{metric}"),
-                        f"{metric}_cuped_capped": apply_capping(df_agg_metric,
+                        f"{metric}_cuped_capped": lambda df_agg_metric: apply_capping(df_agg_metric,
                                                                 metric=f"{metric}_cuped",
                                                                 method=CappingMethod.WITH_CUPED,
                                                                 metric_raw=metric)})
             elif method == TimeseriesMethod.ISOTONIC_CAPPED:
                 df_agg_metric = df_agg_metric.assign(**{
                         f"{metric}_isotonic": apply_isotonic(df_agg_metric, metric, f"{covariate_prefix}_{metric}"),
-                        f"{metric}_isotonic_capped": apply_capping(df_agg_metric,
-                                                                metric=f"{metric}_isotoic",
+                        f"{metric}_isotonic_capped": lambda df_agg_metric: apply_capping(df_agg_metric,
+                                                                metric=f"{metric}_isotonic",
                                                                 method=CappingMethod.WITH_ISOTONIC,
                                                                 metric_raw=metric)})
 
