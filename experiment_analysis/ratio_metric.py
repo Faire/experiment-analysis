@@ -99,7 +99,6 @@ def ttest_ratio_metric(
     n_treat = treat_dat.shape[0]
 
     treat_ratio = treat_dat[numerator].sum() / treat_dat[denominator].sum()
-
     control_ratio = control_dat[numerator].sum(
     ) / control_dat[denominator].sum()
 
