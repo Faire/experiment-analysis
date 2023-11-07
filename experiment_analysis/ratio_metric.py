@@ -40,7 +40,7 @@ def calc_ratio_metric_var(
     cov_mat = df[[numerator, denominator]].cov()
     covar = cov_mat.iloc[0, 1]
     var_ratio = (
-        (1 / (mean_denominator) ** 2) * var_numerator
+        (var_numerator / mean_denominator ** 2)  
         + (mean_numerator ** 2 / mean_denominator ** 4) * var_denominator
         - 2 * (mean_numerator / mean_denominator ** 3) * covar
     )
@@ -94,9 +94,12 @@ def ttest_ratio_metric(
 
     n_samples = df.shape[0]
     control_dat = df[df[bucket_col] == control_label]
+    n_control = control_dat.shape[0]
     treat_dat = df[df[bucket_col] == treatment_label]
+    n_treat = treat_dat.shape[0]
 
     treat_ratio = treat_dat[numerator].sum() / treat_dat[denominator].sum()
+
     control_ratio = control_dat[numerator].sum(
     ) / control_dat[denominator].sum()
 
@@ -106,9 +109,7 @@ def ttest_ratio_metric(
     var_control_ratio_metric = calc_ratio_metric_var(
         control_dat, numerator, denominator
     )
-    se_delta = np.sqrt(var_treat_ratio_metric + var_control_ratio_metric) / np.sqrt(
-        n_samples
-    )
+    se_delta = np.sqrt(var_treat_ratio_metric/n_treat + var_control_ratio_metric/n_control)
     t_stat = delta / se_delta
     p_value = stats.t.sf(np.abs(t_stat), n_samples - 1) * 2
 
